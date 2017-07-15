@@ -1,0 +1,13 @@
+{
+	"tokens":{
+		"telegram": {
+			"API_TOKEN": ""
+		},
+		"tuiter": {
+			"consumer_key": "",
+			"consumer_secret": "",
+			"access_token": "",
+			"access_secret": ""
+		}
+	}
+}

@@ -37,7 +37,7 @@ class tuiter_manager(object):
 		elif (update_dishes == -1):
 			resultado = "MENÚ ACTUALIZADO AYER, PENDIENTE DE ACTUALIZACIÓN"
 		else:
-			resultado = "HOY NO HAY MENÚ HOY, O NO ESTA ACTUALIZADO"
+			resultado = "HOY NO HAY MENÚ, O NO ESTA ACTUALIZADO"
 		self.process_dishes(lista_tweets)
 		return resultado, self.platos
 

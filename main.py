@@ -1,12 +1,10 @@
 # coding=utf-8
-import telebot
+from __future__ import print_function
 import tweepy
-import os, sys
-import glob
-import time
+import telebot
 from tweepy import OAuthHandler
-import json
-import copy
+from telebot import types
+import time, os, sys, copy, json
 
 
 class tuiter_manager(object):
@@ -28,16 +26,15 @@ class tuiter_manager(object):
 		for i, id_plato in zip(range(4), platos):
 			self.platos[platos[i]] = lista_tweets[i].text[offset:].split(', ')
 
-
 	def get_dishes(self):
-		lista_tweets = list(tweepy.Cursor(self.twitter.user_timeline, id="cafeteriaEPCC").items(4))
+		lista_tweets  = list(tweepy.Cursor(self.twitter.user_timeline, id="cafeteriaEPCC").items(4))
 		update_dishes = self.check_update_dishes(lista_tweets[0])
 		if (update_dishes == 0):
 			resultado = "MENÚ ACTUALIZADO HOY"
 		elif (update_dishes == -1):
 			resultado = "MENÚ ACTUALIZADO AYER, PENDIENTE DE ACTUALIZACIÓN"
 		else:
-			resultado = "HOY NO HAY MENÚ HOY, O NO ESTA ACTUALIZADO"
+			resultado = "HOY NO HAY MENÚ, O NO ESTA ACTUALIZADO"
 		self.process_dishes(lista_tweets)
 		return resultado, self.platos
 
@@ -63,29 +60,36 @@ class telegram_manager(object):
 		@self.bot.message_handler(commands=["nuevo_menu"])
 		def reply_juanker(message):
 			self.bot.send_message(message, "Dime los primeros separados por comas")
-			
 			resultado, platos = self.tm.get_dishes()
 			respuesta = self.construir_respuesta(resultado, platos, repetidos=True)
 			self.bot.reply_to(message, respuesta)
 
+		@self.bot.message_handler(commands=["vote"])
+		def vote(message):
+			resultado, platos = self.tm.get_dishes()
+			markup = types.InlineKeyboardMarkup()
+
+			for dia_plato in ["Primeros_hoy", "Segundos_hoy"]:
+				for x in (set(platos[dia_plato])):
+					plato = x.encode('UTF-8').title() + "\n"
+					plato_callback = plato.replace(" ", "")
+					markup.add(types.InlineKeyboardButton(plato, callback_data=plato_callback))
+    			self.bot.reply_to(message, "Elige los mejores platos", disable_notification=True, reply_markup=markup)
 
 		self.bot.polling()
 
 
 	def construir_respuesta(self, resultado, platos, repetidos=False):
-
 		for dia_plato in ["Primeros", "Segundos"]:
 			resultado += "\n" + dia_plato + "\n"
 			for x in (set(platos[dia_plato + "_hoy"])):
 				resultado += "  - " + x.encode('UTF-8').title() + "\n"
-
-		if repetidos == True:
+		if repetidos:
 			resultado += "\n \n ---------- REPETIDOS --------- \n"
 			for x in (set(platos["Primeros_hoy"]) & set(platos["Primeros_ayer"]))\
 							| (set(platos["Segundos_hoy"]) & set(platos["Segundos_ayer"])):
 				resultado = resultado.replace("  - " + x.encode('UTF-8').title() + "\n", "",1)
 				resultado += "  - " + x.encode('UTF-8').title() + "\n"
-
 		resultado += "\n \n  ¡¡¡ BUEN PROVECHO !!!"
 
 		return resultado
